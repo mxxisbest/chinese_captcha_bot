@@ -288,13 +288,30 @@ async def handle_challenge_response(event):
             # TODO: design messages for this occation
             pass
         msg = 'msg_challenge_passed' if correct else 'msg_challenge_mercy_passed'
+        await event.edit(text=group_config[msg], buttons=None)
         if correct:
             if group_config['delete_passed_challenge']:
                 delete = asyncio.create_task(safe_delete_message(bot, group_config['delete_passed_challenge_interval'], channel=chat, id=[bot_msg]))
     else:
         msg = 'msg_challenge_failed'
-
-    await event.edit(text=group_config[msg], buttons=None)
+        await event.edit(text=group_config[msg], buttons=None)
+        try:
+            if group_config['challenge_timeout_action'] == 'ban':
+                await bot(EditBannedRequest(chat, user,
+                    ChatBannedRights(until_date=None, view_messages=True)))
+            elif group_config['challenge_timeout_action'] == 'kick':
+                await bot(EditBannedRequest(chat, user,
+                    ChatBannedRights(until_date=None, view_messages=True)))
+                await bot(EditBannedRequest(chat, user, ChatBannedRights(until_date=None)))
+            else:  # restrict
+                # assume that the user is already restricted (when joining the group)
+                pass
+        except errors.ChatAdminRequiredError:
+            # lose our privilege between villain joining and timeout
+            pass
+        if group_config['delete_failed_challenge']:
+            await asyncio.create_task(
+                safe_delete_message(bot, group_config['delete_failed_challenge_interval'], channel=chat, id=[bot_msg]))
     if delete: await delete
 
 
