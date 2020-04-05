@@ -51,7 +51,7 @@ async def safe_delete_event(event, delay):
 @events.register(events.ChatAction())
 async def challenge_user(event):
     global config, current_challenges
-    print(event)
+    #print(event)
     group_config = config.get(str(event.chat.id), config['*'])
     bot = event.client
     chat = event.chat
@@ -76,18 +76,19 @@ async def challenge_user(event):
 
     # get previous restriction data
     async with upr_lock:
-        key = '{chat}|{user}'.format(chat=chat.id, user=target.id)
+        #key = '{chat}|{user}'.format(chat=chat.id, user=target.id)
         # a record probably means the user didn't pass the challenge previously
         # (and is fully restricted)
         # this time they leave & rejoin the group in order to pass the test
         # so we won't update the record which is likely fully restricted
-        if not user_previous_restrictions.get(key):
-            try:
-                member = await bot(GetParticipantRequest(chat, target))
-                member = member.participant
-                user_previous_restrictions[key] = member
-            except errors.UserNotParticipantError:
-                logging.warning(f'UserNotParticipantError on challenge_user: user={target.id}, chat={chat.id}')
+        #if not user_previous_restrictions.get(key):
+        #    try:
+        #        member = await bot(GetParticipantRequest(chat, target))
+        #        member = member.participant
+        #        user_previous_restrictions[key] = member
+        #    except errors.UserNotParticipantError:
+        #        logging.warning(f'UserNotParticipantError on challenge_user: user={target.id}, chat={chat.id}')
+        pass
 
     # Attempt to restrict the user
     try:
@@ -105,26 +106,22 @@ async def challenge_user(event):
 
     challenge = Challenge()
 
-    def challenge_to_buttons(ch):
-        # There can be 8 buttons per row at most (more are ignored).
-        buttons = [KeyboardButtonCallback(text=str(c), data=str(c)) for c in ch.choices()]
-        choices = [buttons[i*8:i*8+8] for i in range((len(buttons)+7)//8)]
-        # manual approval/refusal by group admins
-        choices.extend([[KeyboardButtonCallback(text=group_config['msg_approve_manually'], data='+'),
-            KeyboardButtonCallback(text=group_config['msg_refuse_manually'], data='-')]])
-        return choices
+    choices = [[KeyboardButtonCallback('A',data='A'),
+        KeyboardButtonCallback('B',data='B'),KeyboardButtonCallback('C',data='C'),KeyboardButtonCallback('D',data='D')]]
+    choices.extend([[KeyboardButtonCallback(text=group_config['msg_approve_manually'], data='+'),
+        KeyboardButtonCallback(text=group_config['msg_refuse_manually'], data='-')]])
 
     timeout = group_config['challenge_timeout']
 
     try:
-        bot_msg_id = await event.reply(message=group_config['msg_challenge'].format(
-            timeout=timeout, challenge=challenge.qus()), buttons=challenge_to_buttons(challenge))
+        #bot_msg_id = await event.reply(message=group_config['msg_challenge'].format(
+            #timeout=timeout, challenge=challenge.qus()), buttons=challenge_to_buttons(challenge))
+        bot_msg_id = await event.reply("请回答以上问题",file=str(challenge.url()),buttons=choices)
         bot_msg_id = bot_msg_id.id
         if group_config['delete_join_message']:
             asyncio.create_task(safe_delete_event(event, group_config['delete_join_message_interval']))
     except errors.BadRequestError:  # msg to reply not found
-        bot_msg_id = await event.respond(message=group_config['msg_challenge'].format(
-            timeout=timeout, challenge=challenge.qus()), buttons=challenge_to_buttons(challenge))
+        bot_msg_id = await event.respond("请回答以上问题",file=str(challenge.url()),buttons=choices)
         bot_msg_id = bot_msg_id.id
 
     timeout_event = asyncio.create_task(
@@ -346,8 +343,10 @@ async def main():
     bot.add_event_handler(challenge_user)
     bot.add_event_handler(handle_challenge_response)
 
+
     wait_time = 1
     while True:
+    #while False:
         start_time = time.time()
         try:
             await bot.start(bot_token=config['token'])
