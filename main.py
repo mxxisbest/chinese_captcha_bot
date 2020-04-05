@@ -41,14 +41,27 @@ async def safe_delete_message(bot, delay, *args, **kwarg):
     except errors.BadRequestError:  # msg to delete not found
         pass
 
+async def safe_delete_join(event, delay):
+    await asyncio.sleep(delay)
+    try:
+        await event.delete()
+    except errors.BadRequestError:  # msg to delete not found
+        pass
 
 @events.register(events.ChatAction())
 async def challenge_user(event):
     global config, current_challenges
 
+    print (event)
     bot = event.client
     chat = event.chat
     target = event.user
+
+    if event.user_left:
+       asyncio.create_task(safe_delete_join(event, 7))
+
+    if event.user_kicked:
+        asyncio.create_task(safe_delete_join(event, 7))
 
     if event.user_added:
         me = await bot.get_me()
@@ -106,6 +119,7 @@ async def challenge_user(event):
         bot_msg_id = await event.reply(message=group_config['msg_challenge'].format(
             timeout=timeout, challenge=challenge.qus()), buttons=challenge_to_buttons(challenge))
         bot_msg_id = bot_msg_id.id
+        asyncio.create_task(safe_delete_join(event, 60))
     except errors.BadRequestError:  # msg to reply not found
         bot_msg_id = await event.respond(message=group_config['msg_challenge'].format(
             timeout=timeout, challenge=challenge.qus()), buttons=challenge_to_buttons(challenge))
@@ -239,17 +253,22 @@ async def handle_challenge_response(event):
             try:
                 await event.edit(text=group_config['msg_approved'].format(user=username), 
                     buttons=None)
+                await asyncio.create_task(
+                    safe_delete_message(bot, group_config['delete_passed_challenge_interval'], channel=chat, id=[bot_msg]))
             except errors.BadRequestError:   # message to edit not found
                 pass
         else:  # user_ans == '-'
             try:
                 await bot(EditBannedRequest(chat, target, ChatBannedRights(until_date=None, view_messages=True)))
+
             except errors.ChatAdminRequiredError:
                 await event.answer(message=group_config['msg_bot_no_permission'])
                 return None
             try:
                 await event.edit(text=group_config['msg_refused'].format(user=username),
                     buttons=None)
+                await asyncio.create_task(
+                    safe_delete_message(bot, group_config['delete_failed_challenge_interval'], channel=chat, id=[bot_msg]))
             except errors.BadRequestError:   # message to edit not found
                 pass
 
@@ -289,9 +308,8 @@ async def handle_challenge_response(event):
             pass
         msg = 'msg_challenge_passed' if correct else 'msg_challenge_mercy_passed'
         await event.edit(text=group_config[msg], buttons=None)
-        if correct:
-            if group_config['delete_passed_challenge']:
-                delete = asyncio.create_task(safe_delete_message(bot, group_config['delete_passed_challenge_interval'], channel=chat, id=[bot_msg]))
+        if group_config['delete_passed_challenge']:
+            delete = asyncio.create_task(safe_delete_message(bot, group_config['delete_passed_challenge_interval'], channel=chat, id=[bot_msg]))
     else:
         msg = 'msg_challenge_failed'
         await event.edit(text=group_config[msg], buttons=None)
@@ -324,6 +342,7 @@ async def main():
         bot = TelegramClient('bot', config['api_id'], config['api_hash'], proxy=proxy, connection_retries=0)
     else:
         bot = TelegramClient('bot', config['api_id'], config['api_hash'], connection_retries=0)
+        
     bot.add_event_handler(challenge_user)
     bot.add_event_handler(handle_challenge_response)
 
