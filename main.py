@@ -41,7 +41,7 @@ async def safe_delete_message(bot, delay, *args, **kwarg):
     except errors.BadRequestError:  # msg to delete not found
         pass
 
-async def safe_delete_join(event, delay):
+async def safe_delete_event(event, delay):
     await asyncio.sleep(delay)
     try:
         await event.delete()
@@ -51,23 +51,24 @@ async def safe_delete_join(event, delay):
 @events.register(events.ChatAction())
 async def challenge_user(event):
     global config, current_challenges
-
-    print (event)
+    print(event)
+    group_config = config.get(str(event.chat.id), config['*'])
     bot = event.client
     chat = event.chat
     target = event.user
 
     if event.user_left:
-       asyncio.create_task(safe_delete_join(event, 7))
+        if group_config['delete_left_message']:
+            asyncio.create_task(safe_delete_event(event, group_config['delete_left_message_interval']))
 
     if event.user_kicked:
-        asyncio.create_task(safe_delete_join(event, 7))
+        if group_config['delete_kick_message']:
+            asyncio.create_task(safe_delete_event(event, group_config['delete_kick_message_interval']))
 
     if event.user_added:
         me = await bot.get_me()
         if me.id in event.user_ids:
             async with config_lock:
-                group_config = config.get(str(event.chat.id), config['*'])
                 await event.respond(message=group_config['msg_self_introduction'])
         return None
     elif not event.user_joined:
@@ -119,7 +120,8 @@ async def challenge_user(event):
         bot_msg_id = await event.reply(message=group_config['msg_challenge'].format(
             timeout=timeout, challenge=challenge.qus()), buttons=challenge_to_buttons(challenge))
         bot_msg_id = bot_msg_id.id
-        asyncio.create_task(safe_delete_join(event, 60))
+        if group_config['delete_join_message']:
+            asyncio.create_task(safe_delete_event(event, group_config['delete_join_message_interval']))
     except errors.BadRequestError:  # msg to reply not found
         bot_msg_id = await event.respond(message=group_config['msg_challenge'].format(
             timeout=timeout, challenge=challenge.qus()), buttons=challenge_to_buttons(challenge))
@@ -161,12 +163,12 @@ async def handle_challenge_timeout(bot, delay, chat, user, bot_msg):
 
     try:
         if group_config['challenge_timeout_action'] == 'ban':
-            await bot(EditBannedRequest(chat, user,
-                ChatBannedRights(until_date=None, view_messages=True)))
+            await bot.edit_permissions(chat,user,view_messages=False)
+
         elif group_config['challenge_timeout_action'] == 'kick':
-            await bot(EditBannedRequest(chat, user,
-                ChatBannedRights(until_date=None, view_messages=True)))
-            await bot(EditBannedRequest(chat, user, ChatBannedRights(until_date=None)))
+            await bot.edit_permissions(chat,user,view_messages=False)
+            await bot.edit_permissions(chat,user)
+
         else:  # restrict
             # assume that the user is already restricted (when joining the group)
             pass
@@ -259,7 +261,7 @@ async def handle_challenge_response(event):
                 pass
         else:  # user_ans == '-'
             try:
-                await bot(EditBannedRequest(chat, target, ChatBannedRights(until_date=None, view_messages=True)))
+                await bot.edit_permissions(chat,user,view_messages=False)
 
             except errors.ChatAdminRequiredError:
                 await event.answer(message=group_config['msg_bot_no_permission'])
@@ -315,12 +317,10 @@ async def handle_challenge_response(event):
         await event.edit(text=group_config[msg], buttons=None)
         try:
             if group_config['challenge_timeout_action'] == 'ban':
-                await bot(EditBannedRequest(chat, user,
-                    ChatBannedRights(until_date=None, view_messages=True)))
+                await bot.edit_permissions(chat,user,view_messages=False)
             elif group_config['challenge_timeout_action'] == 'kick':
-                await bot(EditBannedRequest(chat, user,
-                    ChatBannedRights(until_date=None, view_messages=True)))
-                await bot(EditBannedRequest(chat, user, ChatBannedRights(until_date=None)))
+                await bot.edit_permissions(chat,user,view_messages=False)
+                await bot.edit_permissions(chat,user)
             else:  # restrict
                 # assume that the user is already restricted (when joining the group)
                 pass
