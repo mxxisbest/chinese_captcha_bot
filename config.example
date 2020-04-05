@@ -43,6 +43,12 @@
         "delete_passed_challenge": true,
         "delete_passed_challenge_interval": 15,
         "delete_failed_challenge": false,
-        "delete_failed_challenge_interval": 180
+        "delete_failed_challenge_interval": 180，
+        "delete_join_message": false,
+        "delete_join_message_interval": 200,
+        "delete_left_message": false,
+        "delete_left_message_interval": 7,
+        "delete_kick_message": false,
+        "delete_kick_message_interval": 7
     }
 }
