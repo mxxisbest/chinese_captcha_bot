@@ -1,14 +1,12 @@
 # Telegram-CAPTCHA-bot
 
-[English](README-en.md)
-
 一个 Telegram 机器人，通过点按钮的方式来判断加群者是否为真人。
 
 ## 如何使用
 
 ### 配置环境
 
-需要 Python 3.7 和 [Telethon](https://github.com/LonamiWebs/Telethon) 1.7.1 来运行机器人。如果你需要让机器人通过 SOCKS5 代理运行，还需要安装 [PySocks](https://github.com/Anorov/PySocks)。
+需要 Python 3.7 和 [Telethon](https://github.com/LonamiWebs/Telethon) 1.11.3 来运行机器人。如果你需要让机器人通过 SOCKS5 代理运行，还需要安装 [PySocks](https://github.com/Anorov/PySocks)。
 
 另外，你需要向 [@BotFather](https://t.me/BotFather) 申请一个 Telegram 机器人的 token，并按照 [Telegram 官网的步骤](https://core.telegram.org/api/obtaining_api_id) 申请 api_id 和 api_hash。
 
@@ -17,8 +15,8 @@
 ### 安装并运行
 
 ```
-git clone https://github.com/lziad/Telegram-CAPTCHA-bot 
-cd Telegram-CAPTCHA-bot
+git clone https://github.com/mxxisbest/chinese_captcha_bot.git
+cd chinese_captcha_bot
 python3 -m venv ./venv
 source ./venv/bin/activate
 pip3 install -r requirements.txt
