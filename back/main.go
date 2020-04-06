@@ -100,8 +100,8 @@ func main() {
 
 		if ANS != "" {
 			log.Println("开始写入", URL, ANS)
-			rt, err = redisClient.Do("mset", URL, ANS)
-                        log.Println("写入结果"，rt)
+			rt, err := redis.String(redisClient.Do("mset", URL, ANS))
+                        log.Println("写入结果",rt)
                         log.Println("err",err)
 			res.ANS = URL + ":" + ANS
 

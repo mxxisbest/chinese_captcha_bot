@@ -5,8 +5,8 @@ services:
     container_name: tkback
     restart: always
     ports:
-      - "8002"
-    entrypoint: ["/app/tkback", "-conn", redis:6379"]
+      - "7777:8002"
+    entrypoint: ["/app/tkback", "-conn", "redis:6379"]
 
   redis:
     image: "redis:5"
