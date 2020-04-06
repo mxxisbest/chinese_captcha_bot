@@ -1,0 +1,16 @@
+version: "3"
+services:
+  tkback:
+    build: .
+    container_name: tkback
+    restart: always
+    ports:
+      - "8002"
+    entrypoint: ["/app/tkback", "-conn", redis:6379"]
+
+  redis:
+    image: "redis:5"
+    container_name: redis
+    restart: always
+    expose:
+      - "6379"

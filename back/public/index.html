@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>题库录入</title>
+
+
+  <link rel="stylesheet" href="jscss/index.css">
+  <script src="jscss/vue.min.js"></script>
+  <script src="jscss/axios.min.js"></script>
+  <script src="jscss/index.js"></script>
+  <script src="jscss/vue-clipboard.min.js"></script>
+
+</head>
+
+<body>
+  <div id="app">
+    <el-container>
+      <el-header></el-header>
+      <el-main>
+        <div :class="[isPc ? 'body-center body-width-pc' : 'body-center body-width-mb']">
+          <img width="200" src="https://is.sy/goDuKp" @click="goToGayHub">
+          
+          <el-input ref="long" v-model="longUrl" size="medium" @keyup.enter.native="enterLongUrl">
+          <el-button  type="text" slot="prepend" disabled>ImageUrl：</el-button>
+          </el-input>
+          <el-input  ref="short" v-model="shortKey" size="medium" @keyup.enter.native="enterShortKey">
+            <el-button  type="text" slot="prepend" disabled> Ans is: </el-button>
+            <el-button slot="append" icon="el-icon-magic-stick" @click="doShort" :loading="loading"></el-button>
+          </el-input>
+          <el-input class="copy-content" v-model="shortUrl" size="medium" readonly v-if="shortUrl !== ''">
+            <el-button slot="append" v-clipboard:copy="shortUrl" v-clipboard:success="onCopy" ref="copy-btn" icon="el-icon-document-copy"></el-button>
+          </el-input>
+        </div>
+      </el-main>
+    </el-container>
+  </div>
+
+  <script>
+    const repo = 'https://is.sy/mXxjWC'
+    const backend = 'http://tk.mxx.best/'
+
+    let app = new Vue({
+      el: "#app",
+      data() {
+        return {
+          isPc: true,
+
+          loading: false,
+          longUrl: '',
+          shortUrl: '',
+          shortKey: ''
+        }
+      },
+      created() {
+        const os = this.getOS()
+        if (os.isPc !== true) {
+          this.isPc = false
+        }
+      },
+      mounted() {
+        this.$refs.long.focus()
+      },
+      methods: {
+        enterToDoShort(ev) {
+          ev.keyCode === 13 && this.doShort()
+        },
+        doShort() {
+          let re = new RegExp('http(s*)://[^\s]*')
+          if (re.exec(this.longUrl) === null) {
+            this.$message.warning('请输入正确格式的图片链接')
+            return
+          }
+
+          this.loading = true
+
+          let data = new FormData();
+          data.append("URL", this.longUrl);
+          data.append("ANS",this.shortKey);
+
+          axios.post(backend + '/', data, {
+            header: {
+              "Content-Type": "application/form-data; charset=utf-8"
+            }
+          })
+            .then(res => {
+              if (res.data.Code === 1 && res.data.ShortUrl !== "") {
+                this.shortUrl = res.data.ShortUrl;
+                this.$copyText(this.shortUrl)
+                this.$message.success("题目已入库");
+              } else {
+                this.$message.error("题目入库失败：" + res.data.Message);
+              }
+            })
+            .catch(() => {
+              this.$message.error("题目入库失败");
+            })
+            .finally(() => {
+              this.loading = false;
+            });
+        },
+        goToGayHub() {
+          window.open(repo)
+        },
+        getOS() {
+          let ua = navigator.userAgent,
+            isWindowsPhone = /(?:Windows Phone)/.test(ua),
+            isSymbian = /(?:SymbianOS)/.test(ua) || isWindowsPhone,
+            isAndroid = /(?:Android)/.test(ua),
+            isFireFox = /(?:Firefox)/.test(ua),
+            isChrome = /(?:Chrome|CriOS)/.test(ua),
+            isTablet = /(?:iPad|PlayBook)/.test(ua) || (isAndroid && !/(?:Mobile)/.test(ua)) || (isFireFox && /(?:Tablet)/.test(ua)),
+            isPhone = /(?:iPhone)/.test(ua) && !isTablet,
+            isPc = !isPhone && !isAndroid && !isSymbian;
+
+          return {
+            isTablet: isTablet,
+            isPhone: isPhone,
+            isAndroid: isAndroid,
+            isPc: isPc
+          };
+        },
+        getBodyClass() {
+          return this.isPc ? 'body-center body-width-pc' : 'body-center'
+        },
+        onCopy() {
+          this.$message.success("Copied!");
+        },
+      },
+    })
+  </script>
+
+  <style>
+    .body-center {
+      width: 40%;
+      position: absolute;
+      left: 50%;
+      top: 30%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .body-width-pc {
+      width: 40%;
+    }
+
+    .body-width-mb {
+      width: 90%;
+    }
+
+    .el-input {
+      margin-top: 20px;
+    }
+  </style>
+</body>
+
+</html>
