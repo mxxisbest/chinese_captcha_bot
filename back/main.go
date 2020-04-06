@@ -43,9 +43,10 @@ var redisClient redis.Conn
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
-	config := cors.DefaultConfig()
+	//config := cors.DefaultConfig()
 	//config.AllowOrigins = []string{"https://www.is.sy","http://www.is.sy","https://vip.is.sy","http://vip.is.sy"}
-	router.Use(cors.New(config))
+	//router.Use(cors.New(config))
+	router.Use(cors.Default())
 
 	port := flag.Int("port", defaultPort, "服务端口")
 	conn := flag.String("conn", defaultRedisConfig, "Redis连接，格式: host:port")
