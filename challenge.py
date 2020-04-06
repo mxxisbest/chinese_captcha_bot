@@ -1,4 +1,6 @@
 import random
+import json
+from urllib.request import Request, urlopen
 
 class Challenge:
     def __init__(self):
@@ -9,9 +11,20 @@ class Challenge:
     def __str__(self):
         return '{url},{ans}'.format(url=self._url, ans=self._ans)
 
+
+
     def new(self):
-        url='https://vip1.loli.net/2020/04/05/EC7Wnlr2UKoZQvt.png'
-        ans='D'
+        with open('config.json', encoding='utf-8') as f:
+            config = json.load(f)
+
+        tk = config['tk_url']
+        html = urlopen( tk )
+        data = html.read()
+        strs = str(data)
+        strs= strs[2:-1]
+        data_json = json.loads(strs)
+        url=data_json['Url']
+        ans=data_json['Ans']
 
         self._ans = ans
         self._url = url

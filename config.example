@@ -4,6 +4,8 @@
     // https://core.telegram.org/api/obtaining_api_id
     "api_id": 123456,
     "api_hash": "",
+    //题库地址
+    "tk_url": "",
     // Proxy settings (only SOCKS5 proxy is supported currently)
     "proxy": {
         "address": "127.0.0.1",
