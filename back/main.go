@@ -126,7 +126,7 @@ func getchallenge() string {
 	redisClient = redisPool.Get()
 	defer redisClient.Close()
 
-	URL = redisClient.Do("RANDOMKEY")
+	URL, _ := redis.String(redisClient.Do("RANDOMKEY"))
 	ANS, _ := redis.String(redisClient.Do("get", URL))
 
 	return URL + ":" + ANS
