@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"encoding/json"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -29,6 +30,12 @@ type redisPoolConf struct {
 	db             int
 	handleTimeout  int
 }
+
+type Challenge struct  {
+        Url   string
+        Ans string
+}
+
 
 const letterBytes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -128,10 +135,11 @@ func getchallenge() string {
 	redisClient = redisPool.Get()
 	defer redisClient.Close()
 
-	URL, _ := redis.String(redisClient.Do("RANDOMKEY"))
-	ANS, _ := redis.String(redisClient.Do("get", URL))
-
-	return URL + ":" + ANS
+	Url, _ := redis.String(redisClient.Do("RANDOMKEY"))
+	Ans, _ := redis.String(redisClient.Do("get", Url))
+	res := Challenge{Url,Ans}
+	ret, _ := json.Marshal(res)
+	return string(ret)
 }
 
 func initRedisPool() {
