@@ -111,7 +111,7 @@ async def challenge_user(event):
     choices.extend([[KeyboardButtonCallback(text=group_config['msg_approve_manually'], data='+'),
         KeyboardButtonCallback(text=group_config['msg_refuse_manually'], data='-')]])
 
-    timeout = group_config['challenge_timeout']
+    #timeout = group_config['challenge_timeout']
 
     try:
         #bot_msg_id = await event.reply(message=group_config['msg_challenge'].format(
